@@ -2,7 +2,7 @@ trigger:
   none  # manual run only
 
 pool:
-  pool
+  my-demo-pool
 
 stages:
   - stage: DryRunStage
