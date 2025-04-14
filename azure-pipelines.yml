@@ -1,0 +1,30 @@
+trigger:
+  none  # manual run only
+
+pool:
+  pool
+
+stages:
+  - stage: DryRunStage
+    displayName: 'Dry Run Stage'
+    jobs:
+      - job: DryRunJob
+        displayName: 'Dry Run Job'
+        steps:
+          - script: echo "✅ Pipeline syntax is valid and running on $(Agent.OS)"
+            displayName: 'Echo Agent Info'
+
+          - script: |
+              echo "🔍 Simulating build step..."
+              echo "✔️ Pretend we built something successfully!"
+            displayName: 'Simulate Build'
+
+          - script: |
+              echo "📦 Simulating artifact packaging..."
+              echo "✔️ Pretend we packaged a .jar file or similar"
+            displayName: 'Simulate Artifact Creation'
+
+          - script: |
+              echo "✅ All steps completed successfully in dry run mode!"
+            displayName: 'Dry Run Complete'
+
