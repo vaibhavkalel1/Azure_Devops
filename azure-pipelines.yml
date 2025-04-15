@@ -1,30 +1,34 @@
 trigger:
-  none  # manual run only
+  - main  # or your branch name
 
 pool:
-  my-demo-pool
+  vmImage: 'ubuntu-latest'
+
+variables:
+  MAVEN_OPTS: '-Xmx1024m'
 
 stages:
-  - stage: DryRunStage
-    displayName: 'Dry Run Stage'
+  - stage: Build
     jobs:
-      - job: DryRunJob
-        displayName: 'Dry Run Job'
+      - job: MavenBuild
         steps:
-          - script: echo "✅ Pipeline syntax is valid and running on $(Agent.OS)"
-            displayName: 'Echo Agent Info'
 
-          - script: |
-              echo "🔍 Simulating build step..."
-              echo "✔️ Pretend we built something successfully!"
-            displayName: 'Simulate Build'
+          - task: Checkout@1
+            displayName: 'Checkout Code'
 
-          - script: |
-              echo "📦 Simulating artifact packaging..."
-              echo "✔️ Pretend we packaged a .jar file or similar"
-            displayName: 'Simulate Artifact Creation'
+          - task: Maven@3
+            displayName: 'Build and Test with Maven'
+            inputs:
+              mavenPomFile: 'pom.xml'
+              goals: 'clean install'
+              options: '-B'
+              javaHomeOption: 'JDKVersion'
+              jdkVersionOption: '1.11'
+              mavenVersionOption: 'Default'
 
-          - script: |
-              echo "✅ All steps completed successfully in dry run mode!"
-            displayName: 'Dry Run Complete'
-
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish JAR artifact'
+            inputs:
+              pathToPublish: 'target'
+              artifactName: 'java-demo-artifact'
+              publishLocation: 'Container'
