@@ -16,7 +16,7 @@ stages:
       - job: Deploy
         displayName: 'Deploy VM Resources'
         pool:
-          vmImage: 'ubuntu-latest'
+          Devops_Agent
 
         steps:
           - task: AzureCLI@2
