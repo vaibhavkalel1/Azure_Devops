@@ -4,7 +4,7 @@ trigger:
       - main
 
 variables:
-  azureSubscription: 'Azuresubscription1'
+  azureSubscription: 'Azure subscription 1'
   resourceGroupName: 'Test-Rg'
   deploymentName: 'suse-linux-vm-deployment'
   location: 'eastus'
