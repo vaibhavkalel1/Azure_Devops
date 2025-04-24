@@ -3,54 +3,45 @@ trigger:
     include:
       - main
 
-stages:
-- stage: Validate
-  displayName: 'Validate Bicep template'
-  jobs:
-  - job: bicepValidate
-    displayName: 'Bicep Validate'
-    pool: 
-      vmImage: 'ubuntu-latest'
-    steps:
-    - task: AzureCLI@2
-      inputs:
-        azureSubscription: 'testsc'
-        scriptType: bash
-        scriptLocation: inlineScript
-        inlineScript: |
-          az bicep install
-          az bicep build infra/main.bicep --outfile infra/main.json
-          az deployment group validate \
-            --resource-group $(ResourceGroup) \
-            --template-file infra/main.json \
-            --parameters sshPublicKey="$(cat ~/.ssh/id_rsa.pub)" \
-            --parameters vmName=$(vmName) \
-            --parameters adminUsername=$(adminUsername) \
-            --parameters location=$(location) \
-            --parameters vmSize=$(vmSize) \
-            --parameters osDiskSizeGb=$(osDiskSizeGb)
+variables:
+  azureSubscription: 'MyAzureServiceConnection'
+  resourceGroup: 'rg-dev-vm'
+  location: 'eastus'
+  vmName: 'demo-vm'
+  vmAdminUsername: 'azureuser'
+  sshPublicKey: $(sshPublicKey)   # define this in pipeline as secret
 
-- stage: Deploy
-  displayName: 'Deploy Ubuntu VM'
-  dependsOn: Validate
-  jobs:
-  - deployment: deployVM
-    displayName: 'Deploy VM with Bicep'
-    environment: 'Azure.Ubuntu-VM'
-    pool:
-      vmImage: 'ubuntu-latest'
-    strategy:
-      runOnce:
-        deploy:
-          steps:
+stages:
+  - stage: Deploy
+    displayName: Deploy VM with NSG
+    jobs:
+      - job: Deploy
+        displayName: 'Deploy Bicep Template'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - checkout: self
+
           - task: AzureCLI@2
+            displayName: 'Create or Update Resource Group'
             inputs:
-              azureSubscription: 'testsc'
+              azureSubscription: $(azureSubscription)
               scriptType: bash
               scriptLocation: inlineScript
               inlineScript: |
-                az bicep install
+                az group create --name $(resourceGroup) --location $(location)
+
+          - task: AzureCLI@2
+            displayName: 'Deploy Bicep Template'
+            inputs:
+              azureSubscription: $(azureSubscription)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
                 az deployment group create \
-                  --resource-group $(ResourceGroup) \
-                  --template-file infra/main.bicep \
-                  --parameters @infra/main.parameters.json
+                  --resource-group $(resourceGroup) \
+                  --template-file bicep/main.bicep \
+                  --parameters @bicep/parameters.dev.json \
+                  --parameters \
+                    vmAdminUsername=$(vmAdminUsername) \
+                    sshPublicKey="$(sshPublicKey)"
