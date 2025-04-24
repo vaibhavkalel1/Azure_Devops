@@ -1,0 +1,58 @@
+# azure-pipelines.yml
+
+trigger:
+  branches:
+    include:
+      - main
+
+stages:
+- stage: Validate
+  displayName: 'Validate ARM template'
+  jobs:
+  - job: bicepValidate
+    displayName: 'Bicep Validate'
+    pool: 
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: 'testsc'
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          az bicep install
+          az bicep build infra/main.bicep --outfile infra/main.json
+          az deployment group validate \
+            --resource-group $(ResourceGroup) \
+            --template-file infra/main.json \
+            --parameters sshPublicKey="$(cat ~/.ssh/id_rsa.pub)" \
+            --parameters vmName=$(vmName) \
+            --parameters adminUsername=$(adminUsername) \
+            --parameters location=$(location) \
+            --parameters vmSize=$(vmSize) \
+            --parameters osDiskSizeGb=$(osDiskSizeGb)
+
+- stage: Deploy
+  displayName: 'Deploy SUSE VM'
+  dependsOn: Validate
+  jobs:
+  - deployment: deployVM
+    displayName: 'Deploy VM with Bicep'
+    environment: 'Azure.SUSE-VM'
+    pool:
+      vmImage: 'ubuntu-latest'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: 'testsc'
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az bicep install
+                az deployment group create \
+                  --resource-group $(ResourceGroup) \
+                  --template-file infra/main.bicep \
+                  --parameters @infra/main.parameters.json
