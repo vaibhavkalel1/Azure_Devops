@@ -1,5 +1,3 @@
-# azure-pipelines.yml
-
 trigger:
   branches:
     include:
@@ -7,7 +5,7 @@ trigger:
 
 stages:
 - stage: Validate
-  displayName: 'Validate ARM template'
+  displayName: 'Validate Bicep template'
   jobs:
   - job: bicepValidate
     displayName: 'Bicep Validate'
@@ -33,12 +31,12 @@ stages:
             --parameters osDiskSizeGb=$(osDiskSizeGb)
 
 - stage: Deploy
-  displayName: 'Deploy SUSE VM'
+  displayName: 'Deploy Ubuntu VM'
   dependsOn: Validate
   jobs:
   - deployment: deployVM
     displayName: 'Deploy VM with Bicep'
-    environment: 'Azure.SUSE-VM'
+    environment: 'Azure.Ubuntu-VM'
     pool:
       vmImage: 'ubuntu-latest'
     strategy:

@@ -1,6 +1,4 @@
-// infra/main.bicep
-
-@description('Name of the SUSE VM')
+@description('Name of the Ubuntu VM')
 param vmName string
 
 @description('Admin username for the VM')
@@ -60,7 +58,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
   }
 }
 
-// SUSE Linux VM
+// Ubuntu Linux VM
 resource vm 'Microsoft.Compute/virtualMachines@2021-07-01' = {
   name: vmName
   location: location
@@ -83,9 +81,9 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-07-01' = {
     }
     storageProfile: {
       imageReference: {
-        publisher: 'SUSE'
-        offer: 'SLES'
-        sku: '15-sp3-gen2'
+        publisher: 'Canonical'
+        offer: '0001-com-ubuntu-server-jammy'
+        sku: '22_04-lts-gen2'
         version: 'latest'
       }
       osDisk: {
