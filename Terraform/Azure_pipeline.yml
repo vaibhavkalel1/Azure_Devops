@@ -1,0 +1,39 @@
+trigger:
+  branches:
+    include:
+      - main  # or your desired branch
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  terraformVersion: '1.5.0'  # adjust as needed
+
+stages:
+- stage: Terraform
+  jobs:
+  - job: TerraformDeploy
+    steps:
+
+    - task: UseTerraform@0
+      inputs:
+        terraformVersion: '$(terraformVersion)'
+
+    - task: Checkout@1
+
+    - script: terraform init
+      displayName: 'Terraform Init'
+
+    - script: terraform plan -out=tfplan
+      displayName: 'Terraform Plan'
+
+    - script: terraform apply -auto-approve tfplan
+      displayName: 'Terraform Apply'
+
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: 'testsc'
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          echo "Azure login completed"
